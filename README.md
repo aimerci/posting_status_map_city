@@ -10,8 +10,8 @@
 
 ### データの取得
 - Google Form で情報を取得します
-- Google Spreadsheet で集計やキーコードとの紐づけを行います
-  -　キーコードは行政コードがおすすめ  
+- Google Spreadsheet で集計やキーコードとの紐づけを行います  
+  - キーコードは行政コードがおすすめ  
   - 公開設定に注意。別スプシを作成し、IMPORTRANGE関数がおすすめ
   - [解説ページ](https://roboma.io/blog/marketing/importrange-function-of-google-spreadsheet/)
 
