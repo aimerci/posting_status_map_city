@@ -36,44 +36,37 @@
       attribution: '© OpenStreetMap contributors',
     }).addTo(map);
 
-    // GeoJSONの読み込みURL（市区町村境界データ：例として国土数値情報のデータをホストしたURLなど）
+    // GeoJSONの読み込みURL（市区町村境界データ）
     const GEOJSON_URL = 'geojson/N03-21_210101.geojson';
 
-    // Leaflet GeoJSONレイヤー変数（後で更新時に削除できるように）
     let geojsonLayer = null;
 
-    // CSVデータ取得＆地図更新関数
+    // 色分け関数
+    function getColor(count) {
+      if (count >= 500) return '#800026';    // 濃い赤
+      else if (count >= 100) return '#BD0026'; // 赤
+      else if (count >= 50) return '#E31A1C';  // 明るい赤
+      else if (count >= 10) return '#FC4E2A';  // オレンジ
+      else if (count > 0) return '#FD8D3C';   // 薄オレンジ
+      else return '#EEE';                     // 0枚またはデータなしは薄グレー
+    }
+
     function updateMap() {
       Promise.all([
         fetch(GEOJSON_URL).then((res) => res.json()),
         fetch(SHEETS_CSV_URL).then((res) => res.text()),
       ]).then(([geojson, csvText]) => {
-        // CSVをパースして配列に変換
         const data = Papa.parse(csvText, { header: true }).data;
 
-        // 枚数の最大値（色付けに使用）
-        const maxCount = Math.max(
-          ...data.map((d) => Number(d['枚数合計'] || 0))
-        );
-
-        // 市区町村名→枚数マップ作成
+        // 市区町村コード→枚数と名前のマップ作成
         const countMap = {};
+        const nameMap = {};
         data.forEach((d) => {
-          countMap[d['市区町村名']] = Number(d['枚数合計'] || 0);
+          countMap[d['N03_007']] = Number(d['枚数合計'] || 0);
+          nameMap[d['N03_007']] = d['市区町村名'];
         });
 
-        // 色付け関数
-
-        function getColor(count) {
-        	if (count >= 500) return '#800026';    // 濃い赤
-        	else if (count >= 100) return '#BD0026'; // 赤
-        	else if (count >= 50) return '#E31A1C';  // 明るい赤
-        	else if (count >= 10) return '#FC4E2A';  // オレンジ
-        	else if (count > 0) return '#FD8D3C';   // 薄オレンジ
-        	else return '#EEE';                     // 0枚またはデータなしは薄グレー
-        	}
-
-        // 既存レイヤーがあれば削除
+        // 既存レイヤー削除
         if (geojsonLayer) {
           geojsonLayer.remove();
         }
@@ -81,8 +74,8 @@
         // GeoJSONレイヤー追加
         geojsonLayer = L.geoJSON(geojson, {
           style: (feature) => {
-            const name = feature.properties.name;
-            const count = countMap[name] || 0;
+            const code = feature.properties.N03_007;
+            const count = countMap[code] || 0;
             return {
               fillColor: getColor(count),
               fillOpacity: 0.7,
@@ -91,15 +84,15 @@
             };
           },
           onEachFeature: (feature, layer) => {
-            const name = feature.properties.name;
-            const count = countMap[name] || 0;
+            const code = feature.properties.N03_007;
+            const count = countMap[code] || 0;
+            const name = nameMap[code] || code;
             layer.bindPopup(`${name}: ${count} 枚`);
           },
         }).addTo(map);
       });
     }
 
-    // 初回実行
     updateMap();
   </script>
 </body>
