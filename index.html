@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>市区町村別 枚数マップ</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <style>
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>市区町村別 枚数マップ（Google Sheets公開CSV版）</h1>
+  <div id="map"></div>
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- PapaParse CSVパースライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+  <script>
+    // Google SheetsのCSV公開URL（ここをあなたのURLに置き換える）
+    const SHEETS_CSV_URL =
+      'https://docs.google.com/spreadsheets/d/1ve6Z_ec0LYsHgNlQ1NdLSa1DP5_IpsDES_Sq4lkQSAs/pub?output=csv';
+
+    // 地図初期化（東京付近の座標）
+    const map = L.map('map').setView([35.68, 139.76], 9);
+
+    // OpenStreetMapタイル
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(map);
+
+    // GeoJSONの読み込みURL（市区町村境界データ：例として国土数値情報のデータをホストしたURLなど）
+    const GEOJSON_URL = 'geojson/N03-21_210101.geojson';
+
+    // Leaflet GeoJSONレイヤー変数（後で更新時に削除できるように）
+    let geojsonLayer = null;
+
+    // CSVデータ取得＆地図更新関数
+    function updateMap() {
+      Promise.all([
+        fetch(GEOJSON_URL).then((res) => res.json()),
+        fetch(SHEETS_CSV_URL).then((res) => res.text()),
+      ]).then(([geojson, csvText]) => {
+        // CSVをパースして配列に変換
+        const data = Papa.parse(csvText, { header: true }).data;
+
+        // 枚数の最大値（色付けに使用）
+        const maxCount = Math.max(
+          ...data.map((d) => Number(d['枚数合計'] || 0))
+        );
+
+        // 市区町村名→枚数マップ作成
+        const countMap = {};
+        data.forEach((d) => {
+          countMap[d['市区町村名']] = Number(d['枚数合計'] || 0);
+        });
+
+        // 色付け関数
+
+        function getColor(count) {
+        	if (count >= 500) return '#800026';    // 濃い赤
+        	else if (count >= 100) return '#BD0026'; // 赤
+        	else if (count >= 50) return '#E31A1C';  // 明るい赤
+        	else if (count >= 10) return '#FC4E2A';  // オレンジ
+        	else if (count > 0) return '#FD8D3C';   // 薄オレンジ
+        	else return '#EEE';                     // 0枚またはデータなしは薄グレー
+        	}
+
+        // 既存レイヤーがあれば削除
+        if (geojsonLayer) {
+          geojsonLayer.remove();
+        }
+
+        // GeoJSONレイヤー追加
+        geojsonLayer = L.geoJSON(geojson, {
+          style: (feature) => {
+            const name = feature.properties.name;
+            const count = countMap[name] || 0;
+            return {
+              fillColor: getColor(count),
+              fillOpacity: 0.7,
+              color: '#555',
+              weight: 1,
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const name = feature.properties.name;
+            const count = countMap[name] || 0;
+            layer.bindPopup(`${name}: ${count} 枚`);
+          },
+        }).addTo(map);
+      });
+    }
+
+    // 初回実行
+    updateMap();
+  </script>
+</body>
+</html>
