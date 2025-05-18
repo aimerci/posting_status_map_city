@@ -45,7 +45,7 @@
   <script>
     // Google SheetsのCSV公開URL
     const SHEETS_CSV_URL =
-      'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/data/posting_cityname_list%20-%20sum.csv';
+      'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/view/data/posting_cityname_list%20-%20sum.csv';
 
     // 地図初期化（東京付近）
     const map = L.map('map').setView([35.68, 139.76], 9);
@@ -56,7 +56,7 @@
     }).addTo(map);
 
     // GeoJSONの読み込みURL（市区町村境界データ）
-    const GEOJSON_URL = 'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/geojson/N03-21_210101.geojson';
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/view/geojson/N03-21_210101.geojson';
 
     let geojsonLayer = null;
 
