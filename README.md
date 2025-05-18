@@ -18,6 +18,6 @@
 ### Github更新
 - Google Spreadsheet からデータを CSVファイルで保存する
 - data フォルダに CSVファイルをアップロードする
-- index.html内の、ファイルパスを確認・更新する
+- index.html内の、dataとgeojsonのファイルパスを確認・更新する
 - index.html内の、キーコードを確認・更新する
 
