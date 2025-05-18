@@ -3,74 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <title>市区町村別 枚数マップ</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
   <style>
     #map {
       height: 90vh;
       width: 100%;
     }
-
-  .legend {
-    line-height: 18px;
-    color: #555;
-    background: white;
-    padding: 6px 8px;
-    font: 14px Arial, sans-serif;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
-    z-index: 1000; /* ← これを追加 */
-    position: relative; /* ← これも必要 */
-  }
-
-  .legend i {
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.7;
-  }
   </style>
 </head>
 <body>
   <h1>市区町村別 枚数マップ（Google Sheets公開CSV版）</h1>
   <div id="map"></div>
 
-  <!-- 凡例 -->
-  <div class="legend">
-    <div class="legend-item"><div class="legend-color" style="background-color: #800026;"></div>500枚以上</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #BD0026;"></div>100〜499枚</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #E31A1C;"></div>50〜99枚</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #FC4E2A;"></div>10〜49枚</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #FD8D3C;"></div>1〜9枚</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #EEE;"></div>0枚またはデータなし</div>
-  </div>
-
   <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- PapaParse -->
+  <!-- PapaParse CSVパースライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
   <script>
+    // Google SheetsのCSV公開URL（ここをあなたのURLに置き換える）
     const SHEETS_CSV_URL =
       'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/data/posting_cityname_list%20-%20sum.csv';
 
+    // 地図初期化（東京付近の座標）
     const map = L.map('map').setView([35.68, 139.76], 9);
 
+    // OpenStreetMapタイル
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
     }).addTo(map);
 
+    // GeoJSONの読み込みURL（市区町村境界データ）
     const GEOJSON_URL = 'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/geojson/N03-21_210101.geojson';
 
     let geojsonLayer = null;
 
+    // 色分け関数
     function getColor(count) {
-      if (count >= 500) return '#800026';
-      else if (count >= 100) return '#BD0026';
-      else if (count >= 50) return '#E31A1C';
-      else if (count >= 10) return '#FC4E2A';
-      else if (count > 0) return '#FD8D3C';
-      else return '#EEE';
+      if (count >= 500) return '#800026';    // 濃い赤
+      else if (count >= 100) return '#BD0026'; // 赤
+      else if (count >= 50) return '#E31A1C';  // 明るい赤
+      else if (count >= 10) return '#FC4E2A';  // オレンジ
+      else if (count > 0) return '#FD8D3C';   // 薄オレンジ
+      else return '#EEE';                     // 0枚またはデータなしは薄グレー
     }
 
     function updateMap() {
@@ -80,6 +58,7 @@
       ]).then(([geojson, csvText]) => {
         const data = Papa.parse(csvText, { header: true }).data;
 
+        // 市区町村コード→枚数と名前のマップ作成
         const countMap = {};
         const nameMap = {};
         data.forEach((d) => {
@@ -87,10 +66,12 @@
           nameMap[d['N03_007']] = d['city_name'];
         });
 
+        // 既存レイヤー削除
         if (geojsonLayer) {
           geojsonLayer.remove();
         }
 
+        // GeoJSONレイヤー追加
         geojsonLayer = L.geoJSON(geojson, {
           style: (feature) => {
             const code = feature.properties.N03_007;
@@ -113,29 +94,6 @@
     }
 
     updateMap();
-
-  const legend = L.control({ position: 'bottomright' });
-
-  legend.onAdd = function (map) {
-    const div = L.DomUtil.create('div', 'legend');
-    const grades = [0, 10, 50, 100, 500];
-    const labels = [];
-
-    for (let i = 0; i < grades.length; i++) {
-      const from = grades[i];
-      const to = grades[i + 1];
-
-      labels.push(
-        '<i style="background:' + getColor(from + 1) + '"></i> ' +
-        from + (to ? '&ndash;' + (to - 1) : '+')
-      );
-    }
-
-    div.innerHTML = '<strong>枚数</strong><br>' + labels.join('<br>');
-    return div;
-  };
-
-  legend.addTo(map);
   </script>
 </body>
 </html>
