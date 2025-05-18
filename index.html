@@ -34,7 +34,7 @@
   </style>
 </head>
 <body>
-  <h1>市区町村別 枚数マップ（Google Sheets公開CSV版）</h1>
+  <h1>市区町村別 枚数マップ</h1>
   <div id="map"></div>
 
   <!-- Leaflet -->
@@ -63,9 +63,9 @@
     // 色分け関数
     function getColor(count) {
       if (count >= 500) return '#800026';    // 濃い赤
-      else if (count >= 100) return '#BD0026'; // 赤
-      else if (count >= 50) return '#E31A1C';  // 明るい赤
-      else if (count >= 10) return '#FC4E2A';  // オレンジ
+      else if (count >= 300) return '#BD0026'; // 赤
+      else if (count >= 100) return '#E31A1C';  // 明るい赤
+      else if (count >= 50) return '#FC4E2A';  // オレンジ
       else if (count > 0) return '#FD8D3C';   // 薄オレンジ
       else return '#EEE';                     // 薄グレー
     }
