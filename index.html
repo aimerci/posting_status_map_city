@@ -12,6 +12,25 @@
       height: 90vh;
       width: 100%;
     }
+    /* 凡例のスタイル */
+    .legend {
+      line-height: 18px;
+      color: #555;
+      background: white;
+      padding: 6px 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 5px;
+      font-size: 14px;
+      /* 最前面に表示 */
+      z-index: 1000 !important;
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
@@ -24,11 +43,11 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
   <script>
-    // Google SheetsのCSV公開URL（ここをあなたのURLに置き換える）
+    // Google SheetsのCSV公開URL
     const SHEETS_CSV_URL =
       'https://raw.githubusercontent.com/aimerci/posting_status_map/refs/heads/main/data/posting_cityname_list%20-%20sum.csv';
 
-    // 地図初期化（東京付近の座標）
+    // 地図初期化（東京付近）
     const map = L.map('map').setView([35.68, 139.76], 9);
 
     // OpenStreetMapタイル
@@ -48,7 +67,7 @@
       else if (count >= 50) return '#E31A1C';  // 明るい赤
       else if (count >= 10) return '#FC4E2A';  // オレンジ
       else if (count > 0) return '#FD8D3C';   // 薄オレンジ
-      else return '#EEE';                     // 0枚またはデータなしは薄グレー
+      else return '#EEE';                     // 薄グレー
     }
 
     function updateMap() {
@@ -66,12 +85,10 @@
           nameMap[d['N03_007']] = d['city_name'];
         });
 
-        // 既存レイヤー削除
         if (geojsonLayer) {
           geojsonLayer.remove();
         }
 
-        // GeoJSONレイヤー追加
         geojsonLayer = L.geoJSON(geojson, {
           style: (feature) => {
             const code = feature.properties.N03_007;
@@ -94,6 +111,33 @@
     }
 
     updateMap();
+
+    // 凡例コントロール作成
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function (map) {
+      const div = L.DomUtil.create('div', 'legend');
+      const grades = [0, 1, 10, 50, 100, 500];
+      const labels = [];
+
+      div.innerHTML += '<b>枚数の凡例</b><br>';
+
+      for (let i = 0; i < grades.length; i++) {
+        const from = grades[i];
+        const to = grades[i + 1];
+        const color = getColor(from + 1);
+
+        labels.push(
+          '<i style="background:' + color + '"></i> ' +
+          from + (to ? '&ndash;' + (to - 1) : '+')
+        );
+      }
+
+      div.innerHTML += labels.join('<br>');
+      return div;
+    };
+
+    legend.addTo(map);
   </script>
 </body>
 </html>
