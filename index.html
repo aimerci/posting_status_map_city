@@ -63,7 +63,7 @@
         const nameMap = {};
         data.forEach((d) => {
           countMap[d['N03_007']] = Number(d['枚数合計'] || 0);
-          nameMap[d['N03_007']] = d['市区町村名'];
+          nameMap[d['N03_007']] = d['city_name'];
         });
 
         // 既存レイヤー削除
